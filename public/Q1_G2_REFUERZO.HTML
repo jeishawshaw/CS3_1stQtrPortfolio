@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+    <h2> Q1 2nd Graded Exercise submitted by Jeisha Refuerzo of 9 Sodium</h2>
+
+        <label> Meal Price : 
+        <input id="mealPrice" />
+        </label>
+        </br>
+        <label> Tip :
+        <input id="tip" />
+        </label>
+        </br>
+        <label> Service Charge : 
+        <input id="serviceCharge" />
+        </label>
+        </br>
+        <p> Total Meal : <span id="result"></span>
+        </p>
+        
+        <button onclick="totalMeal()"> Accept Input </button>
+      <script>
+        function totalMeal(){
+          let mealPRICE = document.getElementById("mealPrice").value;
+          let TIP = document.getElementById("tip").value;
+          let serviceCHARGE = document.getElementById("serviceCharge").value;
+          let sure = window.confirm("Are you sure of your numbers?")
+ 
+    if(sure) {
+        let totalPrice = (Number(mealPRICE) + Number(TIP) + (Number(serviceCHARGE) / 100 * Number(mealPRICE)));
+        let totalCost = totalPrice.toFixed(2);
+        result.innerHTML =  totalCost;
+    }
+    else{
+    widow.alert("Run the code again")
+    }
+        }
+      </script>
+</body>
+</html> 

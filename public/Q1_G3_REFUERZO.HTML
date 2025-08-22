@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+   <h2> Q1 3rd Graded Exercise submitted by Jeisha Refuerzo of 9 Sodium</h2>
+        
+        <p> Guess The Number : **** </p>
+        <p> The number is from 1 to 100 </p>
+        <label> Enter your guess : 
+        <input id="guess" />
+        </label>
+        </br>
+        </br>
+        <button onclick="checkIt()"> Check It </button>
+        <p> Result : <span id="result"></span>
+        </p>
+
+ <script>
+        function checkIt(){
+            var dNumber = Math.floor(Math.random() * 100) + 1;
+            let GUESS = document.getElementById("guess").value;
+            
+
+            if(GUESS == dNumber){
+                result.innerHTML = "You are correct!"
+            }
+            else if(GUESS < dNumber){
+                result.innerHTML = "Lower than the number"
+            }
+            else {
+                result.innerHTML = "Higher than the number"
+            }
+    }
+      </script>
+
+</body>
+
+</html>
