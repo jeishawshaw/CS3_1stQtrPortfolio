@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>jeishawshaw's planner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --purple-700:#6d28d9;
+      --purple-300:#c7b3ff;
+      --bg:#f8f5ff;
+    }
+    .bubble-font{font-family:'Baloo 2',cursive}
+    .note-item:hover{background:#f3e8ff}
+    .editor{min-height:60vh; outline:none}
+    .fullscreen-modal{position:fixed;inset:0;z-index:60;background:rgba(10,7,18,0.6);display:flex;align-items:center;justify-content:center;padding:1rem}
+    .modal-card{background:white;border-radius:1rem;max-width:1100px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,0.2)}
+    .rounded-xl-2{border-radius:1rem}
+    .tag-pill{background:#f3e8ff;padding:0.15rem .5rem;border-radius:999px;font-size:.75rem}
+    .code-area{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; min-height:60vh; width:100%; border:1px dashed #eae6ff; padding:1rem; border-radius:.5rem; resize:vertical}
+    .bubble-count{background:linear-gradient(135deg,#f8eaff,#e9d5ff); padding:.6rem 1rem; border-radius:999px; font-weight:700; font-size:1.15rem; display:inline-block}
+  </style>
+</head>
+<body class="bg-purple-50 text-gray-800">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-purple-200 p-4 flex flex-col gap-4">
+      <h1 class="text-2xl font-bold text-purple-900 bubble-font">jeishawshaw's planner</h1>
+      <nav class="flex flex-col gap-2">
+        <button onclick="showSection('dashboard')" class="w-full text-left rounded-lg px-3 py-2 bg-purple-300">Dashboard</button>
+        <button onclick="showSection('tasks')" class="w-full text-left rounded-lg px-3 py-2 bg-purple-300">Tasks</button>
+        <button onclick="showSection('notes')" class="w-full text-left rounded-lg px-3 py-2 bg-purple-300">Notes</button>
+        <button onclick="showSection('diary')" class="w-full text-left rounded-lg px-3 py-2 bg-purple-300">Diary</button>
+        <button onclick="showSection('gwa')" class="w-full text-left rounded-lg px-3 py-2 bg-purple-300">GWA</button>
+      </nav>
+
+      <div class="mt-auto text-xs text-gray-600">Autosave: localStorage • Made with care</div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 overflow-auto p-6">
+      <div class="flex items-center justify-between gap-6 mb-6">
+        <p class="bubble-font text-2xl text-purple-800">“God is within her, she will not fall.” – Psalm 46:5</p>
+        <img src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExNXlvMnoydmFoZXRkd3lqcHFlcHIwNzhoMm9keXA2cDN4d3kzb2FjeCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/iRaC9ukzuS1Og/giphy.gif" class="h-20 rounded-lg" alt="gif">
+      </div>
+
+      <!-- Dashboard -->
+      <section id="dashboard">
+        <h2 class="text-3xl font-bold bubble-font text-purple-800 mb-4">Dashboard</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- subjects cards -->
+          <div id="subjectCards" class="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+
+          <!-- mini stats -->
+          <div class="bg-white p-4 rounded-xl shadow">
+            <div class="flex items-center justify-between mb-4">
+              <div class="text-sm text-gray-500">Task progress</div>
+              <div id="progressBubble" class="bubble-count text-purple-700">0/0 done</div>
+            </div>
+            <canvas id="taskMiniProgress" width="200" height="200"></canvas>
+            <div id="pendingTasksArea" class="mt-4 bubble-font text-purple-700 text-lg"></div>
+          </div>
+        </div>
+
+        <div class="mt-6 bg-white p-4 rounded-xl shadow">
+          <h3 class="font-semibold mb-2">Upcoming Tasks (sorted by due date)</h3>
+          <ul id="dashboardUpcoming" class="space-y-2"></ul>
+        </div>
+      </section>
+
+      <section id="tasks" class="hidden">
+        <h2 class="text-2xl font-bold bubble-font text-purple-800 mb-4">Tasks</h2>
+        <form id="taskForm" class="flex flex-col md:flex-row md:items-center gap-2 mb-4">
+          <input id="taskInput" placeholder="New task..." class="flex-1 rounded-xl border border-purple-300 p-2" required>
+          <input id="dueDateInput" type="date" class="rounded-xl border border-purple-300 p-2" required>
+          <select id="subjectSelect" class="rounded-xl border border-purple-300 p-2">
+          </select>
+          <button class="bg-purple-400 text-white px-4 py-2 rounded-xl">Add</button>
+        </form>
+
+        <div class="flex items-start gap-6">
+          <div class="w-48">
+            <canvas id="taskMiniProgressTasks" width="120" height="120"></canvas>
+            <div id="progressTextTasks" class="text-purple-700 font-semibold text-center mt-2"></div>
+          </div>
+
+          <div class="flex-1">
+            <div class="bg-white rounded-xl shadow p-2">
+              <div class="grid grid-cols-[40px_1fr_160px_40px] gap-2 items-center font-semibold text-sm text-gray-600 border-b pb-2 mb-2">
+                <div></div><div>Task</div><div>Due Date</div><div></div>
+              </div>
+              <ul id="taskList" class="space-y-2"></ul>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section id="notes" class="hidden">
+        <h2 class="text-2xl font-bold bubble-font text-purple-800 mb-4">Notes & Folders</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+          <div class="col-span-1 bg-white rounded-xl p-3 shadow">
+            <div class="mb-2 font-semibold">Subjects (folders)</div>
+            <div id="folderList" class="space-y-2"></div>
+            <button id="newNotebookBtn" class="mt-3 w-full bg-purple-400 text-white rounded-xl py-2">+ New Notebook</button>
+          </div>
+          <div class="col-span-2 bg-white rounded-xl p-3 shadow">
+            <div class="mb-2 flex items-center justify-between">
+              <div class="font-semibold">Notes</div>
+              <div>
+                <button id="newNoteBtn" class="bg-purple-300 text-purple-900 px-3 py-1 rounded-lg">+ Note</button>
+              </div>
+            </div>
+            <div id="noteList" class="space-y-2 max-h-[56vh] overflow-auto"></div>
+          </div>
+          <div class="col-span-3 bg-white rounded-xl p-4 shadow">
+            <div class="mb-3 flex items-center justify-between">
+              <div class="flex gap-2 items-center">
+                <input id="noteTitleInline" placeholder="Note title / Code filename" class="border p-1 rounded-lg w-64" />
+                <input id="noteTagInput" placeholder="tag (optional)" class="border p-1 rounded-lg w-36" />
+                <select id="noteColor" class="border p-1 rounded-lg">
+                  <option value="">No label</option>
+                  <option value="#fef3c7">Yellow</option>
+                  <option value="#fee2e2">Red</option>
+                  <option value="#ecfccb">Green</option>
+                  <option value="#ede9fe">Purple</option>
+                </select>
+              </div>
+              <div class="flex gap-2">
+                <button id="saveNoteBtn" class="bg-purple-400 text-white px-3 py-1 rounded-lg">Save</button>
+                <button id="openFullscreenNote" class="bg-white border px-3 py-1 rounded-lg">Open Fullscreen</button>
+                <button id="deleteNoteBtn" class="text-red-500 px-3 py-1">Delete</button>
+              </div>
+            </div>
+
+            <div id="editorArea">
+              <div id="noteEditor" class="editor border rounded-lg p-3" contenteditable="true"></div>
+
+              <textarea id="codeEditor" class="code-area hidden" placeholder="// write your code here..."></textarea>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section id="diary" class="hidden">
+        <h2 class="text-2xl font-bold bubble-font text-purple-800 mb-4">Diary</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="bg-white rounded-xl p-3 shadow">
+            <div class="mb-2 font-semibold">Entries</div>
+            <button id="newDiaryBtn" class="w-full bg-purple-400 text-white rounded-xl py-2 mb-3">+ New Entry</button>
+            <div id="diaryList" class="space-y-2 max-h-[62vh] overflow-auto"></div>
+          </div>
+
+          <div class="md:col-span-3 bg-white rounded-xl p-4 shadow">
+            <div class="mb-3 flex items-center justify-between">
+              <div>
+                <input id="diaryTitle" placeholder="Entry title" class="border p-1 rounded-lg w-1/2" />
+              </div>
+              <div>
+                <button id="saveDiaryBtn" class="bg-purple-400 text-white px-3 py-1 rounded-lg">Save Entry</button>
+                <button id="openDiaryFullscreen" class="bg-white border px-3 py-1 rounded-lg">Open Fullscreen</button>
+                <button id="deleteDiaryBtn" class="text-red-500 px-3 py-1">Delete</button>
+              </div>
+            </div>
+            <div id="diaryEditor" class="editor border rounded-lg p-3" contenteditable="true"></div>
+          </div>
+        </div>
+      </section>
+      <section id="gwa" class="hidden">
+        <h2 class="text-2xl font-bold bubble-font text-purple-800 mb-4">GWA Calculator</h2>
+        <div id="gwaSubjects" class="space-y-2 bg-white p-4 rounded-xl shadow"></div>
+        <button onclick="calcGWA()" class="mt-3 bg-purple-400 text-white px-4 py-2 rounded-xl">Calculate GWA</button>
+        <p id="gwaResult" class="mt-4 text-lg font-semibold text-purple-700"></p>
+      </section>
+    </main>
+  </div>
+
+  <div id="fullscreenModal" class="fullscreen-modal hidden">
+    <div class="modal-card rounded-xl-2 overflow-hidden">
+      <div class="p-4 border-b flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <button id="fsClose" class="px-3 py-1 rounded bg-purple-50">Close</button>
+          <div id="fsTitle" class="font-semibold"></div>
+        </div>
+        <div class="flex gap-2">
+          <button id="fsSave" class="bg-purple-400 text-white px-3 py-1 rounded-lg">Save</button>
+          <button id="fsDelete" class="text-red-500 px-3 py-1">Delete</button>
+        </div>
+      </div>
+      <div class="p-4" id="fsContent"></div>
+    </div>
+  </div>
+
+<script>
+const defaultSubjects = ['Physics','Chemistry','Biology','Math','Statistics','English','Filipino','Social Science','CS','PEHM'];
+let subjects = JSON.parse(localStorage.getItem('subjects')) || defaultSubjects;
+let tasks = JSON.parse(localStorage.getItem('tasks')||'[]'); // {id,text,subject,due,done}
+let notesStore = JSON.parse(localStorage.getItem('notesStore')||'{}'); // {subject: [note,...]}
+let diaryStore = JSON.parse(localStorage.getItem('diaryStore')||'{}'); // {id:{id,title,content,updated}}
+
+subjects.forEach(s => { if(!notesStore[s]) notesStore[s]=[]; });
+
+function saveAll(){
+  localStorage.setItem('subjects', JSON.stringify(subjects));
+  localStorage.setItem('tasks', JSON.stringify(tasks));
+  localStorage.setItem('notesStore', JSON.stringify(notesStore));
+  localStorage.setItem('diaryStore', JSON.stringify(diaryStore));
+}
+function uid(){ return crypto.randomUUID(); }
+function formatDate(d){
+  if(!d) return '';
+  const dt = new Date(d);
+  return dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+}
+function formatDateShort(d){
+  if(!d) return '';
+  const dt = new Date(d);
+  return dt.toLocaleDateString();
+}
+const sections = ['dashboard','tasks','notes','diary','gwa'];
+function showSection(id){
+  sections.forEach(s => document.getElementById(s).classList.toggle('hidden', s !== id));
+  // when switching to notes, ensure folder default selected
+  if(id==='notes') renderFolderList();
+}
+function renderSubjectsCards(){
+  const container = document.getElementById('subjectCards');
+  container.innerHTML = '';
+  subjects.forEach(s => {
+    const pendingCount = tasks.filter(t => !t.done && t.subject===s).length;
+    const card = document.createElement('div');
+    card.className = 'bg-white rounded-xl shadow p-4';
+    card.innerHTML = `
+      <div class="flex justify-between items-start">
+        <h3 class="font-bold text-purple-700 bubble-font">${s}</h3>
+        <div class="text-sm text-gray-500">Units: 1</div>
+      </div>
+      <div class="mt-2 flex items-center justify-between">
+        <div class="text-sm text-gray-600">${pendingCount} pending</div>
+        <div>
+          <select data-subj="${s}" class="grade-select rounded-xl border border-purple-300 p-1">
+            <option>1.00</option><option>1.25</option><option>1.50</option><option>1.75</option>
+            <option>2.00</option><option>2.25</option><option>2.50</option><option>2.75</option>
+            <option>3.00</option><option>5.00</option>
+          </select>
+        </div>
+      </div>
+      <ul id="tasks-${s}" class="mt-3 space-y-1 text-sm"></ul>
+    `;
+    container.appendChild(card);
+  });
+}
+
+const taskForm = document.getElementById('taskForm');
+function populateSubjectSelects(){
+  const selects = document.querySelectorAll('#subjectSelect, #noteColor'); // noteColor ignored here but keep
+  const subjSelect = document.getElementById('subjectSelect');
+  subjSelect.innerHTML = '';
+  subjects.forEach(s => {
+    const opt = document.createElement('option'); opt.value=s; opt.textContent=s;
+    subjSelect.appendChild(opt);
+  });
+}
+taskForm?.addEventListener('submit', e => {
+  e.preventDefault();
+  const text = document.getElementById('taskInput').value.trim();
+  const subj = document.getElementById('subjectSelect').value;
+  const due = document.getElementById('dueDateInput').value;
+  if(!text || !due) return alert('Please enter a task and a due date');
+  tasks.push({id: uid(), text, subject: subj, due, done:false});
+  sortTasksByDue();
+  saveAll();
+  renderTaskViews();
+  taskForm.reset();
+});
+function sortTasksByDue(){
+  tasks.sort((a,b) => {
+    const da = new Date(a.due).getTime();
+    const db = new Date(b.due).getTime();
+    return da - db;
+  });
+}
+function toggleTaskById(id, doneVal){
+  const idx = tasks.findIndex(t=>t.id===id);
+  if(idx>-1){
+    tasks[idx].done = typeof doneVal === 'boolean' ? doneVal : !tasks[idx].done;
+    saveAll(); renderTaskViews();
+  }
+}
+function deleteTaskById(id){
+  if(!confirm('Delete this task?')) return;
+  tasks = tasks.filter(t => t.id !== id);
+  saveAll(); renderTaskViews();
+}
+
+let miniChart = null;
+function renderTaskViews(){
+  sortTasksByDue();
+
+  const taskList = document.getElementById('taskList');
+  taskList.innerHTML = '';
+  tasks.forEach(t => {
+    const li = document.createElement('li');
+    li.className = 'grid grid-cols-[40px_1fr_160px_40px] gap-2 items-center p-2 rounded-lg border';
+    li.innerHTML = `
+      <input type="checkbox" ${t.done?'checked':''} data-id="${t.id}" class="taskCheckbox ml-1">
+      <div class="flex-1">${escapeHtml(t.text)} <span class="text-xs text-purple-500">(${t.subject})</span></div>
+      <div class="text-xs text-gray-500">${t.due}</div>
+      <button data-id="${t.id}" class="deleteTaskBtn text-red-500">✕</button>
+    `;
+    taskList.appendChild(li);
+  });
+
+  document.querySelectorAll('.taskCheckbox').forEach(cb=>{
+    cb.addEventListener('change', e => toggleTaskById(cb.dataset.id, cb.checked));
+  });
+  document.querySelectorAll('.deleteTaskBtn').forEach(b=>{
+    b.addEventListener('click', e => deleteTaskById(b.dataset.id));
+  });
+  const done = tasks.filter(t=>t.done).length;
+  const total = tasks.length;
+  const ctx = document.getElementById('taskMiniProgressTasks').getContext('2d');
+  if(miniChart) miniChart.destroy();
+  miniChart = new Chart(ctx,{type:'doughnut',data:{datasets:[{data:[done,Math.max(0,total-done)],backgroundColor:['#a78bfa','#ede9fe']}]},options:{cutout:'70%',plugins:{legend:{display:false}}}});
+  document.getElementById('progressTextTasks').innerText = `${done}/${total} done`;
+
+  renderDashboardPending();
+}
+
+function renderDashboardPending(){
+  subjects.forEach(s => {
+    const ul = document.getElementById('tasks-' + s);
+    if(ul) ul.innerHTML = '';
+  });
+
+  const pendingAll = tasks.filter(t => !t.done).sort((a,b)=> new Date(a.due)-new Date(b.due));
+  pendingAll.forEach(t => {
+    const ul = document.getElementById('tasks-' + t.subject);
+    if(ul){
+      const li = document.createElement('li');
+      li.className = 'flex items-center gap-2 note-item p-2 rounded';
+      li.innerHTML = `<input type="checkbox" data-id="${t.id}" class="dash-checkbox mr-2"> <div class="flex-1"><div class="bubble-font text-sm">${escapeHtml(t.text)}</div><div class="text-xs text-gray-500">due ${t.due}</div></div>`;
+      ul.appendChild(li);
+    }
+  });
+  document.querySelectorAll('.dash-checkbox').forEach(cb=>{
+    cb.addEventListener('change', e => toggleTaskById(cb.dataset.id, cb.checked));
+  });
+
+  const pendingArea = document.getElementById('pendingTasksArea');
+  if(pendingAll.length===0){
+    pendingArea.innerHTML = `<p class="text-purple-500 font-semibold flex items-center bubble-font text-lg">No pending tasks <img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExdGZpeGwwN2dmc2Z1N211Z2hrdjg2a3g4eHhwbzc0NWV0djVsM2QzMyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/12Nq0XPz2CFISA/giphy.gif" class="h-10 ml-2"></p>`;
+  } else {
+    pendingArea.innerHTML = `<p class="text-purple-700 font-semibold bubble-font text-xl">Pending tasks: ${pendingAll.length}</p>`;
+  }
+
+  const upcoming = pendingAll.slice(0,8);
+  const dashUpcoming = document.getElementById('dashboardUpcoming');
+  dashUpcoming.innerHTML = '';
+  upcoming.forEach(t=>{
+    const li = document.createElement('li');
+    li.className = 'flex items-center justify-between p-2 border rounded';
+    li.innerHTML = `<div><div class="font-semibold">${escapeHtml(t.text)}</div><div class="text-xs text-gray-500">${t.subject} • due ${t.due}</div></div><div><input type="checkbox" data-id="${t.id}" ${t.done?'checked':''}></div>`;
+    dashUpcoming.appendChild(li);
+  });
+
+  dashUpcoming.querySelectorAll('input[type=checkbox]').forEach(cb => cb.addEventListener('change', e => toggleTaskById(cb.dataset.id, cb.checked)));
+
+
+  const done = tasks.filter(t=>t.done).length; const total = tasks.length;
+  document.getElementById('progressBubble').innerText = `${done}/${total} done`;
+
+  // small donut for dashboard (reuse miniChart)
+  const ctx2 = document.getElementById('taskMiniProgress').getContext('2d');
+  if(window._dashChart) window._dashChart.destroy();
+  window._dashChart = new Chart(ctx2,{type:'doughnut',data:{datasets:[{data:[done,Math.max(0,total-done)],backgroundColor:['#a78bfa','#ede9fe']}]},options:{cutout:'70%',plugins:{legend:{display:false}}}});
+}
+
+
+const folderListEl = document.getElementById('folderList');
+const noteListEl = document.getElementById('noteList');
+let currentNotebook = subjects[0];
+let currentNoteId = null;
+
+function renderFolderList(){
+  folderListEl.innerHTML = '';
+  subjects.forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'flex items-center justify-between';
+    div.innerHTML = `<button class="w-full text-left p-2 rounded hover:bg-purple-100" data-subj="${s}">${s}</button>`;
+    folderListEl.appendChild(div);
+  });
+  folderListEl.querySelectorAll('button').forEach(b=>{
+    b.addEventListener('click', e => {
+      currentNotebook = b.dataset.subj;
+      document.querySelectorAll('#folderList button').forEach(x=>x.classList.remove('bg-purple-100'));
+      b.classList.add('bg-purple-100');
+      renderNotes();
+      renderEditorArea(); // show CS code box if CS
+    });
+  });
+  const first = folderListEl.querySelector('button');
+  if(first) first.click();
+}
+
+function renderNotes(){
+  noteListEl.innerHTML = '';
+  const arr = (notesStore[currentNotebook]||[]).slice().sort((a,b)=> b.updated - a.updated);
+  if(arr.length===0) noteListEl.innerHTML = '<div class="text-sm text-gray-500">No notes yet</div>';
+  arr.forEach(n=>{
+    const div = document.createElement('div');
+    div.className = 'p-2 rounded note-item flex justify-between items-center';
+    const colorBadge = n.color ? `<div style="width:14px;height:14px;background:${n.color};border-radius:3px;margin-right:.5rem"></div>` : '';
+    div.innerHTML = `<div class="flex items-center gap-2 cursor-pointer" data-id="${n.id}">${colorBadge}<div class="text-sm">${escapeHtml(n.title||'Untitled')}</div></div>
+      <div class="flex gap-2 items-center">
+        <div class="text-xs text-gray-500">${formatDate(n.updated)}</div>
+        <button class="text-red-500 text-xs deleteNoteDirectBtn" data-id="${n.id}">✕</button>
+      </div>`;
+    noteListEl.appendChild(div);
+  });
+  noteListEl.querySelectorAll('[data-id]').forEach(el=>{
+    el.addEventListener('click', e=>{
+      const nid = el.dataset.id;
+      openNote(nid);
+    });
+  });
+
+  noteListEl.querySelectorAll('.deleteNoteDirectBtn').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      e.stopPropagation();
+      deleteNoteDirect(btn.dataset.id);
+    });
+  });
+}
+
+function openNote(id){
+  const arr = notesStore[currentNotebook] || [];
+  const note = arr.find(n=>n.id===id);
+  if(!note) return;
+  currentNoteId = id;
+  document.getElementById('noteTitleInline').value = note.title;
+  document.getElementById('noteTagInput').value = note.tag || '';
+  document.getElementById('noteColor').value = note.color || '';
+  if(currentNotebook === 'CS'){
+    // show code editor and load content
+    document.getElementById('noteEditor').classList.add('hidden');
+    document.getElementById('codeEditor').classList.remove('hidden');
+    document.getElementById('codeEditor').value = note.content || '';
+  } else {
+    document.getElementById('codeEditor').classList.add('hidden');
+    document.getElementById('noteEditor').classList.remove('hidden');
+    document.getElementById('noteEditor').innerHTML = note.content || '';
+  }
+}
+
+document.getElementById('newNoteBtn').addEventListener('click', ()=>{
+  const id = uid();
+  const note = {id, title:'Untitled', content:'', tag:'', color:'', updated: Date.now()};
+  notesStore[currentNotebook] = notesStore[currentNotebook] || [];
+  notesStore[currentNotebook].unshift(note);
+  saveAll(); renderNotes(); openNote(id);
+});
+document.getElementById('saveNoteBtn').addEventListener('click', ()=>{
+  if(!currentNoteId) return alert('Select a note to save');
+  const arr = notesStore[currentNotebook] || [];
+  const note = arr.find(n=>n.id===currentNoteId);
+  if(!note) return;
+  note.title = document.getElementById('noteTitleInline').value || 'Untitled';
+  note.tag = document.getElementById('noteTagInput').value || '';
+  note.color = document.getElementById('noteColor').value || '';
+  note.content = currentNotebook === 'CS' ? document.getElementById('codeEditor').value : document.getElementById('noteEditor').innerHTML;
+  note.updated = Date.now();
+  saveAll(); renderNotes(); alert('Saved');
+});
+document.getElementById('deleteNoteBtn').addEventListener('click', ()=>{
+  if(!currentNoteId) return alert('Select a note'); 
+  if(!confirm('Delete this note?')) return;
+  notesStore[currentNotebook] = (notesStore[currentNotebook]||[]).filter(n=>n.id!==currentNoteId);
+  currentNoteId = null;
+  saveAll(); renderNotes();
+  document.getElementById('noteEditor').innerHTML = ''; document.getElementById('codeEditor').value = ''; document.getElementById('noteTitleInline').value='';
+});
+
+function deleteNoteDirect(id){
+  const arr = notesStore[currentNotebook] || [];
+  const idx = arr.findIndex(n=>n.id===id);
+  if(idx>-1){
+    if(!confirm('Delete this note?')) return;
+    arr.splice(idx,1);
+    if(currentNoteId===id){
+      currentNoteId=null;
+      document.getElementById('noteEditor').innerHTML=''; document.getElementById('codeEditor').value='';
+    }
+    saveAll(); renderNotes();
+  }
+}
+
+const fsModal = document.getElementById('fullscreenModal');
+const fsTitle = document.getElementById('fsTitle');
+const fsContent = document.getElementById('fsContent');
+let fsType = ''; // 'note' or 'diary'
+document.getElementById('openFullscreenNote').addEventListener('click', ()=>{
+  if(!currentNoteId) return alert('Open a note first');
+  openFullscreenNote();
+});
+document.getElementById('fsClose').addEventListener('click', ()=>{ fsModal.classList.add('hidden'); });
+document.getElementById('fsSave').addEventListener('click', ()=>{
+  if(fsType==='note') {
+    const content = fsContent.querySelector('[contenteditable]') ? fsContent.querySelector('[contenteditable]').innerHTML : fsContent.querySelector('textarea')?.value;
+    const arr = notesStore[currentNotebook] || [];
+    const note = arr.find(n=>n.id===currentNoteId);
+    if(note){
+      note.content = content || '';
+      note.updated = Date.now();
+      saveAll();
+      renderNotes();
+      alert('Saved fullscreen note');
+    }
+  } else if(fsType==='diary'){
+    const content = fsContent.querySelector('[contenteditable]').innerHTML;
+    const entry = diaryStore[currentDiaryId];
+    if(entry){
+      entry.content = content; entry.updated = Date.now();
+      saveAll(); renderDiaryList();
+      alert('Saved diary entry');
+    }
+  }
+});
+document.getElementById('fsDelete').addEventListener('click', ()=>{
+  if(!confirm('Delete?')) return;
+  if(fsType==='note'){ deleteNoteBtnFs(); }
+  if(fsType==='diary'){ deleteDiaryFs(); }
+});
+
+function openFullscreenNote(){
+  fsType = 'note';
+  const arr = notesStore[currentNotebook] || [];
+  const note = arr.find(n=>n.id===currentNoteId);
+  if(!note) return;
+  fsTitle.innerText = `${currentNotebook} • ${note.title || 'Untitled'}`;
+  fsContent.innerHTML = '';
+  if(currentNotebook === 'CS'){
+    const ta = document.createElement('textarea');
+    ta.className = 'w-full code-area';
+    ta.value = note.content || '';
+    fsContent.appendChild(ta);
+  } else {
+    const div = document.createElement('div');
+    div.className = 'editor';
+    div.contentEditable = 'true';
+    div.style.minHeight = '60vh';
+    div.innerHTML = note.content || '';
+    fsContent.appendChild(div);
+  }
+  fsModal.classList.remove('hidden');
+}
+function deleteNoteBtnFs(){
+  notesStore[currentNotebook] = (notesStore[currentNotebook]||[]).filter(n=>n.id!==currentNoteId);
+  currentNoteId = null;
+  saveAll(); renderNotes();
+  fsModal.classList.add('hidden');
+}
+function renderEditorArea(){
+  if(currentNotebook === 'CS'){
+    document.getElementById('noteEditor').classList.add('hidden');
+    document.getElementById('codeEditor').classList.remove('hidden');
+    document.getElementById('noteTitleInline').placeholder = 'filename.js (or note title)';
+  } else {
+    document.getElementById('codeEditor').classList.add('hidden');
+    document.getElementById('noteEditor').classList.remove('hidden');
+    document.getElementById('noteTitleInline').placeholder = 'Note title';
+  }
+}
+
+function escapeHtml(s){ if(!s) return ''; return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+const diaryListEl = document.getElementById('diaryList');
+let currentDiaryId = null;
+document.getElementById('newDiaryBtn').addEventListener('click', ()=>{
+  const id = uid();
+  const entry = {id, title: 'Untitled', content:'', updated: Date.now()};
+  diaryStore[id] = entry;
+  saveAll(); renderDiaryList(); openDiary(id);
+});
+document.getElementById('saveDiaryBtn').addEventListener('click', ()=>{
+  if(!currentDiaryId) return alert('Open an entry first');
+  const e = diaryStore[currentDiaryId];
+  e.title = document.getElementById('diaryTitle').value || 'Untitled';
+  e.content = document.getElementById('diaryEditor').innerHTML;
+  e.updated = Date.now();
+  saveAll(); renderDiaryList(); alert('Diary saved');
+});
+document.getElementById('deleteDiaryBtn').addEventListener('click', ()=>{
+  if(!currentDiaryId) return;
+  if(!confirm('Delete this diary entry?')) return;
+  delete diaryStore[currentDiaryId];
+  currentDiaryId = null;
+  document.getElementById('diaryTitle').value=''; document.getElementById('diaryEditor').innerHTML='';
+  saveAll(); renderDiaryList();
+});
+document.getElementById('openDiaryFullscreen').addEventListener('click', ()=>{
+  if(!currentDiaryId) return alert('Open an entry');
+  openDiaryFullscreen();
+});
+
+function renderDiaryList(){
+  diaryListEl.innerHTML = '';
+  const arr = Object.values(diaryStore).sort((a,b)=>b.updated - a.updated);
+  if(arr.length===0) diaryListEl.innerHTML = '<div class="text-sm text-gray-500">No diary entries yet</div>';
+  arr.forEach(en=>{
+    const d = document.createElement('div');
+    d.className = 'p-2 rounded note-item flex justify-between items-center';
+    d.innerHTML = `<div class="cursor-pointer" data-id="${en.id}">${en.title} <div class="text-xs text-gray-500">${formatDate(en.updated)}</div></div><div><button class="text-red-500 text-xs deleteDiaryBtn" data-id="${en.id}">✕</button></div>`;
+    diaryListEl.appendChild(d);
+  });
+  diaryListEl.querySelectorAll('[data-id]').forEach(el=>{
+    el.addEventListener('click', e=>{
+      if(e.target.classList.contains('deleteDiaryBtn')) return;
+      const id = el.dataset.id;
+      openDiary(id);
+    });
+  });
+  diaryListEl.querySelectorAll('.deleteDiaryBtn').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      e.stopPropagation();
+      if(!confirm('Delete this diary entry?')) return;
+      delete diaryStore[btn.dataset.id];
+      saveAll(); renderDiaryList();
+    });
+  });
+}
+
+function openDiary(id){
+  const entry = diaryStore[id];
+  if(!entry) return;
+  currentDiaryId = id;
+  document.getElementById('diaryTitle').value = entry.title;
+  document.getElementById('diaryEditor').innerHTML = entry.content;
+}
+
+function openDiaryFullscreen(){
+  fsType = 'diary';
+  const entry = diaryStore[currentDiaryId];
+  if(!entry) return;
+  fsTitle.innerText = `Diary • ${entry.title}`;
+  fsContent.innerHTML = '';
+  const div = document.createElement('div');
+  div.className = 'editor';
+  div.contentEditable = 'true';
+  div.style.minHeight = '60vh';
+  div.innerHTML = entry.content || '';
+  fsContent.appendChild(div);
+  fsModal.classList.remove('hidden');
+}
+function deleteDiaryFs(){
+  if(currentDiaryId){
+    delete diaryStore[currentDiaryId];
+    currentDiaryId = null;
+    saveAll(); renderDiaryList();
+    fsModal.classList.add('hidden');
+  }
+}
+
+function renderGWA(){
+  const container = document.getElementById('gwaSubjects'); container.innerHTML = '';
+  subjects.forEach(s=>{
+    const row = document.createElement('div');
+    row.className = 'flex items-center gap-3';
+    row.innerHTML = `<div class='w-40'>${s}</div><select class='rounded-xl border border-purple-300 p-2 gradeSelect'><option>1.00</option><option>1.25</option><option>1.50</option><option>1.75</option><option>2.00</option><option>2.25</option><option>2.50</option><option>2.75</option><option>3.00</option><option>5.00</option></select>`;
+    container.appendChild(row);
+  });
+}
+function calcGWA(){
+  let sum=0,count=0;
+  document.querySelectorAll('.gradeSelect').forEach(s=>{ sum+=parseFloat(s.value); count++; });
+  if(count===0) return;
+  document.getElementById('gwaResult').innerText = 'Your GWA: ' + (sum/count).toFixed(2);
+}
+
+function init(){
+  populateSubjectSelects();
+  renderSubjectsCards();
+  sortTasksByDue();
+  renderTaskViews();
+  renderGWA();
+  renderFolderList();
+  renderNotes();
+  renderDiaryList();
+
+  showSection('dashboard');
+}
+init();
+
+</script>
+</body>
+</html>
+
+
+
+
