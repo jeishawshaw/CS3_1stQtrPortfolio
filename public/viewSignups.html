@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>View Club Signups</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f3e8ff;
+text-align:center;
+}
+
+h2{
+color:#7e22ce;
+}
+
+table{
+margin:auto;
+border-collapse:collapse;
+width:80%;
+background:white;
+}
+
+th,td{
+border:1px solid #a855f7;
+padding:8px;
+}
+
+th{
+background:#7e22ce;
+color:white;
+}
+
+select{
+padding:6px;
+border-radius:5px;
+border:1px solid #a855f7;
+}
+
+a{
+color:#7e22ce;
+text-decoration:none;
+font-weight:bold;
+}
+
+a:hover{
+color:#6b21a8;
+}
+
+.message{
+margin-top:10px;
+color:#7e22ce;
+font-weight:bold;
+}
+
+</style>
+
+<script>
+
+let signups=[];
+
+function loadSignups(){
+
+let data = localStorage.getItem("clubSignups");
+
+if(!data){
+document.getElementById("message").innerHTML="No signups saved yet.";
+return;
+}
+
+
+signups = JSON.parse(data);
+
+displayTable(signups);
+
+}
+
+function displayTable(list){
+
+let tableBody="";
+let total=list.length;
+
+if(total===0){
+document.getElementById("tableBody").innerHTML="";
+document.getElementById("total").innerHTML="Total Signup: 0";
+document.getElementById("message").innerHTML="No signups";
+return;
+}
+
+document.getElementById("message").innerHTML="";
+
+list.forEach(function(s){
+
+tableBody+=`
+<tr>
+<td>${s.club}</td>
+<td>${s.studentid}</td>
+<td>${s.fullname}</td>
+<td>${s.grade}</td>
+<td>${s.email}</td>
+<td>${s.mobile}</td>
+<td>${s.status}</td>
+</tr>
+`;
+
+});
+
+document.getElementById("tableBody").innerHTML=tableBody;
+
+document.getElementById("total").innerHTML="Total Signup: "+total;
+
+}
+
+function filterClub(){
+
+let selected=document.getElementById("clubFilter").value;
+
+if(selected==="ALL"){
+displayTable(signups);
+return;
+}
+
+let filtered=signups.filter(function(s){
+return s.club===selected;
+});
+
+displayTable(filtered);
+
+}
+
+</script>
+
+</head>
+
+<body onload="loadSignups()">
+
+<h2>List of Signups</h2>
+
+<p>
+<a href="signup.html">Back to Signup</a>
+</p>
+
+<label>Select Your Club</label>
+
+<select id="clubFilter" onchange="filterClub()">
+
+<option value="ALL">ALL</option>
+<option value="robotics">Sagala</option>
+<option value="arts">Invictus</option>
+<option value="music">Flux</option>
+<option value="sports">Alianti</option>
+<option value="debate">MUN</option>
+
+</select>
+
+<p id="total"></p>
+
+<p id="message" class="message"></p>
+
+<table>
+
+<tr>
+<th>Club</th>
+<th>ID</th>
+<th>Fullname</th>
+<th>Grade</th>
+<th>Email</th>
+<th>Mobile</th>
+<th>Intern/Extern</th>
+</tr>
+
+<tbody id="tableBody"></tbody>
+
+</table>
+
+</body>
+</html>

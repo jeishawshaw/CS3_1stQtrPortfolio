@@ -68,14 +68,19 @@ button:hover{
 }
 </style>
 
+</script>
 <script>
+
+
 function confirmSubmit(){
     return confirm("Are you sure you want to submit your application?");
 }
 
+
 function confirmReset(){
     return confirm("Are you sure you want to reset the form?");
 }
+
 
 function checkEmpty(element){
     if(element.value.trim()==""){
@@ -84,35 +89,84 @@ function checkEmpty(element){
         element.classList.remove("error");
     }
 }
+
+
+function saveSignup(){
+
+    if(!confirmSubmit()){
+        return false;
+    }
+
+
+    let signup = {
+        studentid: document.getElementById("studentid").value,
+        fullname: document.getElementById("fullname").value,
+        birthday: document.getElementById("birthday").value,
+        email: document.getElementById("email").value,
+        mobile: document.getElementById("mobile").value,
+        grade: document.getElementById("grade").value,
+        club: document.getElementById("club").value,
+        status: document.querySelector('input[name="status"]:checked').value
+    };
+
+    /* check if there is existing data in localStorage */
+    let signups = localStorage.getItem("clubSignups");
+
+    if(signups){
+        signups = JSON.parse(signups);
+    }else{
+        /* initialize list if none exists */
+        signups = [];
+    }
+
+    /* add new signup to the list */
+    signups.push(signup);
+
+    /* save updated list back to localStorage */
+    localStorage.setItem("clubSignups", JSON.stringify(signups));
+
+    alert("Signup saved!");
+
+    /* keep form visible and reset it */
+    document.getElementById("signupForm").reset();
+
+    return false;
+}
+
+/* button to open viewSignUps page */
+function viewSignups(){
+    window.location.href="viewSignUps.html";
+}
+
 </script>
 
 </head>
 
 <body>
 
-<form method="post" action="submit" onsubmit="return confirmSubmit()" onreset="return confirmReset()">
+<form id="signupForm" onsubmit="return saveSignup()" onreset="return confirmReset()">
 
 <fieldset>
 <legend>Personal Information</legend>
 
 <label>
 Student ID
-<input type="number" name="studentid" required onblur="checkEmpty(this)">
+<input type="number" id="studentid" name="studentid" required onblur="checkEmpty(this)">
 </label>
 
 <label>
 Full Name
-<input type="text" name="fullname" required onblur="checkEmpty(this)">
+<input type="text" id="fullname" name="fullname" required onblur="checkEmpty(this)">
 </label>
 
 <label>
 Birthday
-<input type="date" name="birthday" required onblur="checkEmpty(this)">
+<input type="date" id="birthday" name="birthday" required onblur="checkEmpty(this)">
 </label>
 
 <label>
 Email Address
-<input type="email" name="email" required onblur="checkEmpty(this)">
+<input type="email" id="email" name="email" required onblur="checkEmpty(this)">
 </label>
 
 </fieldset>
@@ -123,12 +177,12 @@ Email Address
 
 <label>
 Mobile Phone
-<input type="text" name="mobile" required onblur="checkEmpty(this)">
+<input type="text" id="mobile" name="mobile" required onblur="checkEmpty(this)">
 </label>
 
 <label>
 Grade Level
-<select name="grade" required onblur="checkEmpty(this)">
+<select id="grade" name="grade" required onblur="checkEmpty(this)">
 <option value="">Select Grade</option>
 <option value="g7">Grade 7</option>
 <option value="g8">Grade 8</option>
@@ -145,7 +199,7 @@ Grade Level
 </label>
 
 <label>
-<select name="club" required onblur="checkEmpty(this)">
+<select id="club" name="club" required onblur="checkEmpty(this)">
 <option value="">Choose Club</option>
 <option value="robotics">Sagala</option>
 <option value="arts">Invictus</option>
@@ -155,13 +209,13 @@ Grade Level
 </select>
 </label>
 
-
 </fieldset>
 
 <button type="submit">Submit</button>
 <button type="reset">Reset</button>
+<button type="button" onclick="viewSignups()">View Signups</button>
 
 </form>
 
 </body>
-</html> 
+</html>
