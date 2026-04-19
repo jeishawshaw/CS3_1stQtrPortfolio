@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Add a Movie</title>
+  <title>Add / Update Movie Rating</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -46,12 +46,21 @@
       margin-top: 10px;
       border-radius: 5px;
     }
+    .delete-btn {
+      margin-top: 5px;
+      padding: 5px;
+      background: red;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h2>Add a Movie</h2>
+  <h2>Add / Update a Movie Rating</h2>
 
   <label>Title:</label>
   <input type="text" id="title">
@@ -76,7 +85,7 @@
     <span data-value="5">★</span>
   </div>
 
-  <button onclick="addMovie()">Add Movie</button>
+  <button onclick="addOrUpdateMovie()">Add Movie</button>
 
   <h3>Movie List</h3>
   <div id="movieList"></div>
@@ -88,7 +97,7 @@
   const stars = document.querySelectorAll('#stars span');
   stars.forEach(star => {
     star.addEventListener('click', () => {
-      rating = star.getAttribute('data-value');
+      rating = parseInt(star.getAttribute('data-value'));
       updateStars();
     });
   });
@@ -96,25 +105,42 @@
   function updateStars() {
     stars.forEach(star => {
       star.classList.remove('active');
-      if (star.getAttribute('data-value') <= rating) {
+      if (parseInt(star.getAttribute('data-value')) <= rating) {
         star.classList.add('active');
       }
     });
   }
 
-  function addMovie() {
+  function addOrUpdateMovie() {
     const title = document.getElementById('title').value;
     const year = document.getElementById('year').value;
     const genre = document.getElementById('genre').value;
 
-    const movie = { title, year, genre, rating };
-
     let movies = JSON.parse(localStorage.getItem('movies')) || [];
-    movies.push(movie);
+
+    const existingIndex = movies.findIndex(m => m.title.toLowerCase() === title.toLowerCase());
+
+    if (existingIndex !== -1) {
+      const oldRating = parseInt(movies[existingIndex].rating);
+      const newRating = Math.round((oldRating + rating) / 2);
+
+      movies[existingIndex] = { title, year, genre, rating: newRating };
+    } else {
+      movies.push({ title, year, genre, rating });
+    }
 
     localStorage.setItem('movies', JSON.stringify(movies));
 
     displayMovies();
+  }
+
+  function deleteMovie(index) {
+    if (confirm('Are you sure you want to delete this movie?')) {
+      let movies = JSON.parse(localStorage.getItem('movies')) || [];
+      movies.splice(index, 1);
+      localStorage.setItem('movies', JSON.stringify(movies));
+      displayMovies();
+    }
   }
 
   function displayMovies() {
@@ -123,7 +149,7 @@
 
     let movies = JSON.parse(localStorage.getItem('movies')) || [];
 
-    movies.forEach(movie => {
+    movies.forEach((movie, index) => {
       const div = document.createElement('div');
       div.classList.add('movie-item');
 
@@ -132,7 +158,12 @@
         starsDisplay += '★';
       }
 
-      div.innerHTML = `${movie.title} (${movie.year}) - ${movie.genre}, Rating: ${starsDisplay}`;
+      div.innerHTML = `
+        ${movie.title} (${movie.year}) - ${movie.genre}, Rating: ${starsDisplay}
+        <br>
+        <button class="delete-btn" onclick="deleteMovie(${index})">Delete</button>
+      `;
+
       movieList.appendChild(div);
     });
   }
