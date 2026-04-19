@@ -91,7 +91,7 @@ function checkEmpty(element){
 }
 
 
-function saveSignup(){
+function saveSignup(){`
 
     if(!confirmSubmit()){
         return false;
@@ -109,31 +109,26 @@ function saveSignup(){
         status: document.querySelector('input[name="status"]:checked').value
     };
 
-    /* check if there is existing data in localStorage */
-    let signups = localStorage.getItem("clubSignups");
+
+    let signups = localStorage.setItem("clubSignups");
 
     if(signups){
         signups = JSON.parse(signups);
     }else{
-        /* initialize list if none exists */
         signups = [];
     }
 
-    /* add new signup to the list */
     signups.push(signup);
 
-    /* save updated list back to localStorage */
     localStorage.setItem("clubSignups", JSON.stringify(signups));
 
     alert("Signup saved!");
 
-    /* keep form visible and reset it */
     document.getElementById("signupForm").reset();
 
     return false;
 }
 
-/* button to open viewSignUps page */
 function viewSignups(){
     window.location.href="viewSignUps.html";
 }
