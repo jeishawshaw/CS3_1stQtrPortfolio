@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Club Signup</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f5f0ff;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #5e35b1;
+    }
+
+    form {
+      background: #ede7f6;
+      padding: 20px;
+      border-radius: 10px;
+      width: 300px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
+      border: 1px solid #b39ddb;
+      border-radius: 5px;
+    }
+
+    button {
+      background: #7e57c2;
+      color: white;
+      border: none;
+      padding: 10px;
+      margin-top: 10px;
+      width: 100%;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #5e35b1;
+    }
+
+    a {
+      display: block;
+      margin-top: 15px;
+      color: #5e35b1;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>Club Signup</h1>
+
+<form id="signupForm">
+  <input type="text" id="fullname" placeholder="Full Name" required>
+  <input type="text" id="id" placeholder="ID" required>
+
+  <select id="club" required>
+    <option value="">Select Club</option>
+    <option>Bake Club</option>
+    <option>Himig Agham</option>
+    <option>Computron</option>
+  </select>
+
+  <input type="text" id="grade" placeholder="Grade" required>
+  <input type="email" id="email" placeholder="Email" required>
+  <input type="text" id="mobile" placeholder="Mobile" required>
+
+  <select id="type" required>
+    <option value="">Intern/Extern</option>
+    <option>Intern</option>
+    <option>Extern</option>
+  </select>
+
+  <button type="submit">Submit</button>
+</form>
+
+<a href="3rdGradedView.html">View Signups</a>
+
